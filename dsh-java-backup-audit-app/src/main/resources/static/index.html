@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DSH Backup Auditor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">BA</div>
+      <div><strong>Backup Auditor</strong><span>Powered by Harness</span></div>
+    </div>
+    <button class="primary block" id="newConversation">＋ 新对话</button>
+    <div class="section-label"><span>对话记录</span></div>
+    <div id="conversationList" class="item-list conversation-list"></div>
+  </aside>
+
+  <main class="main">
+    <header class="main-header">
+      <div>
+        <div class="title-row">
+          <span id="statusDot" class="dot"></span>
+          <h1 id="currentName">备份审计官</h1>
+        </div>
+        <p id="currentDetail">备份目录只读体检 · 3-2-1 策略评估（不删除、不移动任何备份）</p>
+      </div>
+      <div class="header-actions">
+        <button class="ghost" id="openStrategy">📋 3-2-1 检查</button>
+        <button class="ghost icon-btn" id="toggleTheme" title="切换主题">🌙</button>
+      </div>
+    </header>
+
+    <div id="workspace" class="workspace">
+      <section class="center">
+        <div id="chatMessages" class="chat-scroll"></div>
+        <div class="composer-wrap">
+          <div id="streamStatus" class="stream-status hidden">
+            <span id="streamStatusText"><span class="status-spinner"></span>AI 正在思考</span>
+          </div>
+          <div class="composer">
+            <textarea id="chatInput" rows="1" placeholder="给我备份目录路径，例如：检查 ~/backups 的新鲜度和缺口"></textarea>
+            <div class="composer-bar">
+              <span class="composer-hint"><kbd>⌘</kbd>+<kbd>↵</kbd> 发送 · 只读审计 · 不动备份文件</span>
+              <div class="composer-actions">
+                <button class="ghost small hidden" id="stopStream">停止</button>
+                <button class="send-btn" id="sendMessage" title="发送">↑</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="resource-sidebar">
+        <div class="resource-scroll">
+          <div class="resource-header">
+            <b>审计工作台</b>
+            <button class="ghost small" id="refreshResource">刷新</button>
+          </div>
+          <nav class="resource-tabs">
+            <button data-resource-tab="scan" class="active">扫描</button>
+            <button data-resource-tab="fresh">新鲜度</button>
+            <button data-resource-tab="trend">趋势</button>
+            <button data-resource-tab="gaps">缺口</button>
+          </nav>
+          <section class="panel" data-tab="scan">
+            <div class="panel-title"><span>备份目录扫描</span></div>
+            <div class="panel-body" style="padding:8px">
+              <input id="dirInput" placeholder="备份目录路径，如 ~/backups" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit">
+              <button class="primary small" id="scanBtn" style="margin-top:6px">只读扫描</button>
+              <div id="scanResult" class="muted small" style="margin-top:8px">扫描结果会显示在这里（只读，不修改文件）</div>
+            </div>
+          </section>
+          <section class="panel hidden" data-tab="fresh">
+            <div class="panel-title"><span>新鲜度判定</span></div>
+            <div class="panel-body" style="padding:8px">
+              <button class="ghost small" id="freshBtn">用上方目录判定</button>
+              <div id="freshResult" class="muted small" style="margin-top:8px">FRESH（&lt;26h）/ STALE（&gt;26h 需查任务）</div>
+            </div>
+          </section>
+          <section class="panel hidden" data-tab="trend">
+            <div class="panel-title"><span>大小趋势</span></div>
+            <div class="panel-body" style="padding:8px">
+              <button class="ghost small" id="trendBtn">用上方目录出趋势</button>
+              <div id="trendResult" class="muted small" style="margin-top:8px">按天聚合 + 骤降异常（&gt;70%）</div>
+            </div>
+          </section>
+          <section class="panel hidden" data-tab="gaps">
+            <div class="panel-title"><span>缺口报告</span></div>
+            <div class="panel-body" style="padding:8px">
+              <div style="display:flex;gap:6px;margin-bottom:8px">
+                <input id="intervalInput" placeholder="预期间隔(h)，默认 24" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit">
+                <button class="ghost small" id="gapBtn">查缺口</button>
+              </div>
+              <div id="gapResult" class="muted small">间隔超阈值×2 即缺口，另列 0 字节坏文件</div>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div class="modal hidden" id="strategyModal">
+    <form class="modal-card" id="strategyForm" style="width:520px">
+      <h2>3-2-1 策略检查</h2>
+      <label>副本份数<input name="copies" required placeholder="3" value="3"></label>
+      <label>介质（逗号分隔）<input name="media" placeholder="disk,cloud"></label>
+      <label>异地副本
+        <select name="offsite" style="font:inherit;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)">
+          <option value="yes">有（yes）</option>
+          <option value="no">没有（no）</option>
+        </select>
+      </label>
+      <p class="muted small">3 份副本 · 2 种介质 · 1 份异地。基于你的自述评估，输出补强建议。</p>
+      <div class="modal-actions"><button type="button" class="ghost" id="cancelStrategyModal">取消</button><button class="primary">评估</button></div>
+    </form>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

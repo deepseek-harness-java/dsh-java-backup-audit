@@ -1,0 +1,19 @@
+server:
+  port: 8115
+
+spring:
+  application:
+    name: dsh-java-backup-audit
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          no-cache: true
+  jackson:
+    default-property-inclusion: non_null
+
+dsh:
+  backupaudit:
+    data-directory: ${user.home}/.dsh-java-backup-audit
+    harness:
+      base-url: ${DSH_HARNESS_BASE_URL:http://127.0.0.1:8090}

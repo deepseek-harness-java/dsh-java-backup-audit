@@ -1,0 +1,6 @@
+id: dsh-java-backup-audit-plugin
+name: DSH Backup Auditor Plugin
+version: 0.1.0
+author: Xiaofuge
+description: Backup audit tools (scan dir, freshness, size trend, gap report, 3-2-1 strategy check) for DeepSeek Harness. Read-only - never delete or move backups.
+entrypoint: cn.xiaofuge.dsh.com.dsh.backupaudit.plugin.DshBackupAuditPlugin
